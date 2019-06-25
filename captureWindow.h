@@ -23,9 +23,7 @@
 #ifndef __CAMERA_CAPTURE_WINDOW__
 #define __CAMERA_CAPTURE_WINDOW__
 
-
 #include "commandLine.h"
-
 
 // forward declarations
 class gstCamera;
@@ -39,7 +37,7 @@ class CaptureWindow
 {
 public:
 	// create the window and camera object
-	static CaptureWindow* Create( const commandLine& cmdLine );
+	static CaptureWindow* Create( commandLine& cmdLine );
 
 	// close the window and camera object
 	~CaptureWindow();
@@ -54,9 +52,13 @@ public:
 	// camera streaming status
 	bool IsStreaming() const;
 
+	// camera dimensions
+	int GetCameraWidth() const;
+	int GetCameraHeight() const;
+
 protected:
 	CaptureWindow();
-	bool init( const commandLine& cmdLine );
+	bool init( commandLine& cmdLine );
 
 	gstCamera* camera;
 	glDisplay* display;

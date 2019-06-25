@@ -45,7 +45,7 @@ CaptureWindow::~CaptureWindow()
 
 
 // Create
-CaptureWindow* CaptureWindow::Create( const commandLine& cmdLine )
+CaptureWindow* CaptureWindow::Create( commandLine& cmdLine )
 {
 	CaptureWindow* window = new CaptureWindow();
 
@@ -60,7 +60,7 @@ CaptureWindow* CaptureWindow::Create( const commandLine& cmdLine )
 
 
 // init
-bool CaptureWindow::init( const commandLine& cmdLine )
+bool CaptureWindow::init( commandLine& cmdLine )
 {
 	/*
 	 * create the camera device
@@ -120,9 +120,6 @@ void CaptureWindow::Render()
 // IsOpen
 bool CaptureWindow::IsOpen() const
 {
-	if( !display )
-		return false;
-
 	return display->IsOpen();
 }
 
@@ -130,9 +127,6 @@ bool CaptureWindow::IsOpen() const
 // IsClosed
 bool CaptureWindow::IsClosed() const
 {
-	if( !display )
-		return true;
-
 	return display->IsClosed();
 }
 
@@ -140,10 +134,22 @@ bool CaptureWindow::IsClosed() const
 // IsStreaming
 bool CaptureWindow::IsStreaming() const
 {
-	if( !camera )
-		return false;
-
 	return camera->IsStreaming();
 }
+
+
+// GetCameraWidth
+int CaptureWindow::GetCameraWidth() const
+{
+	return camera->GetWidth();
+}
+
+
+// GetCameraHeight
+int CaptureWindow::GetCameraHeight() const
+{
+	return camera->GetHeight();
+}
+
 
 

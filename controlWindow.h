@@ -25,10 +25,43 @@
 
 #include <QtWidgets>
 
+#include "commandLine.h"
+#include "captureWindow.h"
+
 
 /*
  * Capture control window
  */
+class ControlWindow : public QWidget
+{
+	Q_OBJECT
+
+public:
+	// create window
+	static ControlWindow* Create( commandLine& cmdLine, CaptureWindow* captureWindow );
+
+	// destructor
+	~ControlWindow();
+
+	// process UI events
+	void ProcessEvents();
+
+	// window open/closed status
+	bool IsOpen() const;
+	bool IsClosed() const;
+
+public slots:
+	void selectLabelFile();
+
+protected:
+	ControlWindow( commandLine& cmdLine, CaptureWindow* captureWindow );
+
+	CaptureWindow* captureWindow;
+
+	std::string labelPath;
+	QLabel*     labelWidget;
+};
+
 
 #endif
 

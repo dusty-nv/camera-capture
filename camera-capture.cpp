@@ -72,7 +72,7 @@ int main( int argc, char** argv )
 
 
 	/*
-	 * create camera window
+	 * create capture window
 	 */
 	CaptureWindow* captureWindow = CaptureWindow::Create(cmdLine);
 
@@ -84,13 +84,30 @@ int main( int argc, char** argv )
 
 
 	/*
+	 * create control window
+	 */
+	ControlWindow* controlWindow = ControlWindow::Create(cmdLine, captureWindow);
+
+	if( !controlWindow )
+	{
+		printf("camera-capture:  failed to open ControlWindow\n");
+		return 0;
+	}
+
+
+	/*
 	 * processing loop
 	 */
 	while( !signal_recieved )
 	{
+		// capture & render latest camera frame
 		captureWindow->Render();
 
-		if( captureWindow->IsClosed() )
+		// update the control window
+		controlWindow->ProcessEvents();
+
+		// check if the user quit
+		if( captureWindow->IsClosed() || controlWindow->IsClosed() )
 			signal_recieved = true;
 	}
 	
@@ -100,6 +117,9 @@ int main( int argc, char** argv )
 	 */
 	printf("camera-capture:  shutting down...\n");
 	
+	if( controlWindow != NULL )
+		delete controlWindow;
+
 	if( captureWindow != NULL )
 		delete captureWindow;
 
