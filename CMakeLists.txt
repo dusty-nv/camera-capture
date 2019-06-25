@@ -8,8 +8,8 @@ set(CMAKE_AUTOMOC ON)
 find_package(Qt5 COMPONENTS Widgets)
 
 if(NOT DEFINED Qt5Widgets_FOUND) 
-	message("-- camera-collection:  Qt5Widgets package not found, skipping...")
-	message("-- camera-collection:  run 'sudo apt-get install qtbase5-dev'")
+	message("-- camera-capture:  Qt5Widgets package not found, skipping...")
+	message("-- camera-capture:  run 'sudo apt-get install qtbase5-dev'")
 	return()
 endif()
 
@@ -24,9 +24,9 @@ message("-- found Qt5Widgets include:  ${Qt5Widgets_INCLUDE_DIRS}")
 get_directory_property(hasParent PARENT_DIRECTORY)
 
 if(hasParent)
-	message("-- camera-collection:  building as submodule, ${hasParent}")
+	message("-- camera-capture:  building as submodule, ${hasParent}")
 else()
-	message("-- camera-collection:  building as standalone")
+	message("-- camera-capture:  building as standalone")
 	
 	# standalone project
 	project(camera-collection)
@@ -58,10 +58,10 @@ endif()
 #
 # build tool
 #
-file(GLOB cameraCollectionSources *.cpp)
+file(GLOB cameraCaptureSources *.cpp)
 
-cuda_add_executable(camera-collection ${cameraCollectionSources})
+cuda_add_executable(camera-capture ${cameraCaptureSources})
 
-target_link_libraries(camera-collection jetson-inference jetson-utils Qt5::Widgets)	
+target_link_libraries(camera-capture jetson-inference jetson-utils Qt5::Widgets)	
 
 

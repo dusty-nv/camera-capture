@@ -51,7 +51,7 @@ CameraWindow* CameraWindow::Create( const commandLine& cmdLine )
 
 	if( !window || !window->init(cmdLine) )
 	{
-		printf("camera-collection:  CameraWindow::Create() failed\n");
+		printf("camera-capture:  CameraWindow::Create() failed\n");
 		return NULL;
 	}
 
@@ -71,11 +71,11 @@ bool CameraWindow::init( const commandLine& cmdLine )
 
 	if( !camera )
 	{
-		printf("\ncamera-collection:  failed to initialize camera device\n");
+		printf("\ncamera-capture:  failed to initialize camera device\n");
 		return false;
 	}
 	
-	printf("\ncamera-collection:  successfully initialized camera device\n");
+	printf("\ncamera-capture:  successfully initialized camera device\n");
 	printf("    width:  %u\n", camera->GetWidth());
 	printf("   height:  %u\n", camera->GetHeight());
 	printf("    depth:  %u (bpp)\n\n", camera->GetPixelDepth());
@@ -88,7 +88,7 @@ bool CameraWindow::init( const commandLine& cmdLine )
 
 	if( !display ) 
 	{
-		printf("camera-collection:  failed to create openGL display\n");
+		printf("camera-capture:  failed to create openGL display\n");
 		return false;
 	}
 
@@ -101,7 +101,7 @@ void CameraWindow::Render()
 {
 	// capture RGBA image
 	if( !camera->CaptureRGBA(&imgRGBA, 1000, true) )
-		printf("camera-collection:  failed to capture RGBA image from camera\n");
+		printf("camera-capture:  failed to capture RGBA image from camera\n");
 
 	// update display
 	if( display != NULL )

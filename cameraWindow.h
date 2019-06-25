@@ -20,8 +20,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __CAMERA_COLLECTION_WINDOW__
-#define __CAMERA_COLLECTION_WINDOW__
+#ifndef __CAMERA_VIEWER_WINDOW__
+#define __CAMERA_VIEWER_WINDOW__
 
 
 #include "commandLine.h"

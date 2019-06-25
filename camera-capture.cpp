@@ -24,7 +24,7 @@
 #include <signal.h>
 
 #include "cameraWindow.h"
-
+#include "captureWindow.h"
 
 
 
@@ -41,8 +41,8 @@ void sig_handler(int signo)
 
 int usage()
 {
-	printf("usage: camera-collection [-h] [--camera CAMERA]\n");
-	printf("                        [--width WIDTH] [--height HEIGHT]\n\n");
+	printf("usage: camera-capture [-h] [--camera CAMERA]\n");
+	printf("                      [--width WIDTH] [--height HEIGHT]\n\n");
 	printf("GUI tool for collecting & labeling data from live camera feed\n\n");
 	printf("optional arguments:\n");
 	printf("  --help           show this help message and exit\n");
@@ -80,7 +80,7 @@ int main( int argc, char** argv )
 
 	if( !cameraWindow )
 	{
-		printf("camera-collection:  failed to open CameraWindow\n");
+		printf("camera-capture:  failed to open CameraWindow\n");
 		return 0;
 	}
 
@@ -100,12 +100,12 @@ int main( int argc, char** argv )
 	/*
 	 * destroy resources
 	 */
-	printf("camera-collection:  shutting down...\n");
+	printf("camera-capture:  shutting down...\n");
 	
 	if( cameraWindow != NULL )
 		delete cameraWindow;
 
-	printf("camera-collection:  shutdown complete.\n");
+	printf("camera-capture:  shutdown complete.\n");
 	return 0;
 }
 
