@@ -23,6 +23,12 @@
 #ifndef __CAMERA_CAPTURE_WINDOW__
 #define __CAMERA_CAPTURE_WINDOW__
 
+#include <QtWidgets>
+
+
+/*
+ * Capture control window
+ */
 
 #endif
 

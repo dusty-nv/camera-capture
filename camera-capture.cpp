@@ -20,12 +20,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <QtWidgets>
-#include <signal.h>
-
-#include "cameraWindow.h"
 #include "captureWindow.h"
+#include "controlWindow.h"
 
+#include <signal.h>
 
 
 bool signal_recieved = false;
