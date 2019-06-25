@@ -20,7 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include "cameraWindow.h"
+#include "captureWindow.h"
 
 #include "gstCamera.h"
 #include "glDisplay.h"
@@ -28,7 +28,7 @@
 
 
 // constructor
-CameraWindow::CameraWindow()
+CaptureWindow::CaptureWindow()
 {
 	camera  = NULL;
 	display = NULL;
@@ -37,7 +37,7 @@ CameraWindow::CameraWindow()
 
 
 // destructor
-CameraWindow::~CameraWindow()
+CaptureWindow::~CaptureWindow()
 {
 	SAFE_DELETE(camera);
 	SAFE_DELETE(display);
@@ -45,13 +45,13 @@ CameraWindow::~CameraWindow()
 
 
 // Create
-CameraWindow* CameraWindow::Create( const commandLine& cmdLine )
+CaptureWindow* CaptureWindow::Create( const commandLine& cmdLine )
 {
-	CameraWindow* window = new CameraWindow();
+	CaptureWindow* window = new CaptureWindow();
 
 	if( !window || !window->init(cmdLine) )
 	{
-		printf("camera-capture:  CameraWindow::Create() failed\n");
+		printf("camera-capture:  CaptureWindow::Create() failed\n");
 		return NULL;
 	}
 
@@ -60,7 +60,7 @@ CameraWindow* CameraWindow::Create( const commandLine& cmdLine )
 
 
 // init
-bool CameraWindow::init( const commandLine& cmdLine )
+bool CaptureWindow::init( const commandLine& cmdLine )
 {
 	/*
 	 * create the camera device
@@ -97,7 +97,7 @@ bool CameraWindow::init( const commandLine& cmdLine )
 	
 
 // Render
-void CameraWindow::Render()
+void CaptureWindow::Render()
 {
 	// capture RGBA image
 	if( !camera->CaptureRGBA(&imgRGBA, 1000, true) )
@@ -118,7 +118,7 @@ void CameraWindow::Render()
 
 
 // IsOpen
-bool CameraWindow::IsOpen() const
+bool CaptureWindow::IsOpen() const
 {
 	if( !display )
 		return false;
@@ -128,7 +128,7 @@ bool CameraWindow::IsOpen() const
 
 
 // IsClosed
-bool CameraWindow::IsClosed() const
+bool CaptureWindow::IsClosed() const
 {
 	if( !display )
 		return true;
@@ -138,7 +138,7 @@ bool CameraWindow::IsClosed() const
 
 
 // IsStreaming
-bool CameraWindow::IsStreaming() const
+bool CaptureWindow::IsStreaming() const
 {
 	if( !camera )
 		return false;

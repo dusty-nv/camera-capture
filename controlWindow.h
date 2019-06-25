@@ -20,8 +20,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __CAMERA_CAPTURE_WINDOW__
-#define __CAMERA_CAPTURE_WINDOW__
+#ifndef __CAMERA_CONTROL_WINDOW__
+#define __CAMERA_CONTROL_WINDOW__
 
 #include <QtWidgets>
 

@@ -20,8 +20,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __CAMERA_VIEWER_WINDOW__
-#define __CAMERA_VIEWER_WINDOW__
+#ifndef __CAMERA_CAPTURE_WINDOW__
+#define __CAMERA_CAPTURE_WINDOW__
 
 
 #include "commandLine.h"
@@ -35,14 +35,14 @@ class glDisplay;
 /*
  * Camera feed window
  */
-class CameraWindow
+class CaptureWindow
 {
 public:
 	// create the window and camera object
-	static CameraWindow* Create( const commandLine& cmdLine );
+	static CaptureWindow* Create( const commandLine& cmdLine );
 
 	// close the window and camera object
-	~CameraWindow();
+	~CaptureWindow();
 
 	// capture & render next camera frame
 	void Render();
@@ -55,7 +55,7 @@ public:
 	bool IsStreaming() const;
 
 protected:
-	CameraWindow();
+	CaptureWindow();
 	bool init( const commandLine& cmdLine );
 
 	gstCamera* camera;

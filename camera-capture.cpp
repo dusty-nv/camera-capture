@@ -74,11 +74,11 @@ int main( int argc, char** argv )
 	/*
 	 * create camera window
 	 */
-	CameraWindow* cameraWindow = CameraWindow::Create(cmdLine);
+	CaptureWindow* captureWindow = CaptureWindow::Create(cmdLine);
 
-	if( !cameraWindow )
+	if( !captureWindow )
 	{
-		printf("camera-capture:  failed to open CameraWindow\n");
+		printf("camera-capture:  failed to open CaptureWindow\n");
 		return 0;
 	}
 
@@ -88,9 +88,9 @@ int main( int argc, char** argv )
 	 */
 	while( !signal_recieved )
 	{
-		cameraWindow->Render();
+		captureWindow->Render();
 
-		if( cameraWindow->IsClosed() )
+		if( captureWindow->IsClosed() )
 			signal_recieved = true;
 	}
 	
@@ -100,8 +100,8 @@ int main( int argc, char** argv )
 	 */
 	printf("camera-capture:  shutting down...\n");
 	
-	if( cameraWindow != NULL )
-		delete cameraWindow;
+	if( captureWindow != NULL )
+		delete captureWindow;
 
 	printf("camera-capture:  shutdown complete.\n");
 	return 0;
