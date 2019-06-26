@@ -25,6 +25,7 @@
 #include "gstCamera.h"
 #include "glDisplay.h"
 
+#include "imageIO.h"
 
 
 // constructor
@@ -114,6 +115,25 @@ void CaptureWindow::Render()
 		sprintf(str, "Data Collection Tool | %.0f FPS", display->GetFPS());
 		display->SetTitle(str);
 	}
+}
+
+
+// Save
+bool CaptureWindow::Save( const char* filename, int quality )
+{
+	if( !filename || !imgRGBA )
+		return false;
+
+	CUDA(cudaDeviceSynchronize());
+
+	if( !saveImageRGBA(filename, (float4*)imgRGBA, camera->GetWidth(), camera->GetHeight(), 255.0f, quality) )
+	{
+		printf("camera-capture:  failed to save %s\n", filename);
+		return false;
+	}
+
+	printf("camera-capture:  saved %s\n", filename);
+	return true;
 }
 
 

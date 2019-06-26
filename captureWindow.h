@@ -45,6 +45,9 @@ public:
 	// capture & render next camera frame
 	void Render();
 
+	// save the latest frame to disk
+	bool Save( const char* filename, int quality=95 );
+
 	// window open/closed status
 	bool IsOpen() const;
 	bool IsClosed() const;

@@ -50,16 +50,35 @@ public:
 	bool IsOpen() const;
 	bool IsClosed() const;
 
+	// sizeHint
+	virtual QSize sizeHint() const;
+
 public slots:
+	void onCapture();
+	void onQualityChanged( int value );
+
+	void selectDatasetPath();
 	void selectLabelFile();
 
 protected:
 	ControlWindow( commandLine& cmdLine, CaptureWindow* captureWindow );
 
+	void createDatasetDirectories();
+
 	CaptureWindow* captureWindow;
+	QStatusBar*    statusBar;
 
 	std::string labelPath;
 	QLabel*     labelWidget;
+	QComboBox*  labelDropdown;
+
+	std::string datasetPath;
+	QLabel*     datasetWidget;	
+
+	QLabel*     qualityLabel;
+	QSlider*    qualitySlider;
+
+	QPushButton* captureButton;
 };
 
 
