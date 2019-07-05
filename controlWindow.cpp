@@ -81,12 +81,28 @@ ControlWindow::ControlWindow( commandLine& cmdLine, CaptureWindow* capture )
 	layout->addItem(labelLayout);
 
 
+	// subset drop-down
+	QHBoxLayout* subsetLayout = new QHBoxLayout();
+
+	setDropdown = new QComboBox();
+
+	setDropdown->addItem(tr("train"));
+	setDropdown->addItem(tr("val"));
+	setDropdown->addItem(tr("test"));
+
+	setDropdown->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+	subsetLayout->addWidget(new QLabel(tr("Current Set       ")));
+	subsetLayout->addWidget(setDropdown);
+
+	layout->addItem(subsetLayout);
+
+
 	// class label drop-down
 	QHBoxLayout* classLayout = new QHBoxLayout();
 
 	labelDropdown = new QComboBox();
 
-	//labelDropdown->setFrameStyle(QFrame::Panel|QFrame::Sunken);
 	labelDropdown->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
 	classLayout->addWidget(new QLabel(tr("Current Class   ")));
@@ -180,22 +196,50 @@ void ControlWindow::createDatasetDirectories()
 	// check that each subdirectory exists
 	QDir dir(QString::fromStdString(datasetPath));
 
-	for( int n=0; n < numClasses; n++ )
-	{
-		const QString subdir = labelDropdown->itemText(n);
+	// create directories for each training set and class
+	const int numSets = setDropdown->count();
 
-		if( !dir.exists(subdir) )
+	for( int s=0; s < numSets; s++ )
+	{
+		const QString setName = setDropdown->itemText(s);
+
+		if( !dir.exists(setName) )
 		{
-			if( !dir.mkdir(subdir) )
+			if( !dir.mkdir(setName) )
 			{
-				const QString msg = QString("Failed to create dataset subdirectory '%1/'").arg(subdir);
+				const QString msg = QString("Failed to create dataset subdirectory '%1/'").arg(setName);
 				QMessageBox::critical(this, tr("Error Creating Dataset Directories"), msg);
 				statusBar->showMessage(QString(STATUS_MSG) + msg);
 				continue;
 			}
 		}
-	}
-			
+	
+		QDir setDir = dir;
+		
+		if( !setDir.cd(setName) )
+		{
+			const QString msg = QString("Failed to cd to dataset subdirectory '%1/'").arg(setName);
+			QMessageBox::critical(this, tr("Error Creating Dataset Directories"), msg);
+			statusBar->showMessage(QString(STATUS_MSG) + msg);
+			continue;
+		}
+
+		for( int n=0; n < numClasses; n++ )
+		{
+			const QString subdir = labelDropdown->itemText(n);
+
+			if( !setDir.exists(subdir) )
+			{
+				if( !setDir.mkdir(subdir) )
+				{
+					const QString msg = QString("Failed to create dataset subdirectory '%1/%2/'").arg(setName, subdir);
+					QMessageBox::critical(this, tr("Error Creating Dataset Directories"), msg);
+					statusBar->showMessage(QString(STATUS_MSG) + msg);
+					continue;
+				}
+			}
+		}
+	}		
 }
 
 // selectDatasetPath
@@ -274,10 +318,12 @@ void ControlWindow::selectLabelFile()
 // onCapture
 void ControlWindow::onCapture()
 {
-	const std::string classLabel = labelDropdown->currentText().toUtf8().constData();
-	const std::string timestamp  = QDateTime::currentDateTime().toString("ddMMyyyy-hhmmss").toUtf8().constData();
-	const std::string directory  = datasetPath + "/" + classLabel;
-	const std::string filename   = directory + "/" + timestamp + ".jpg";
+	const std::string subsetLabel = setDropdown->currentText().toUtf8().constData();
+	const std::string classLabel  = labelDropdown->currentText().toUtf8().constData();
+	const std::string timestamp   = QDateTime::currentDateTime().toString("ddMMyyyy-hhmmss").toUtf8().constData();
+	const std::string subdirPath  = subsetLabel + "/" + classLabel;
+	const std::string directory   = datasetPath + "/" + subdirPath;
+	const std::string filename    = directory + "/" + timestamp + ".jpg";
 
 	if( !captureWindow->Save(filename.c_str()) )
 	{
@@ -286,7 +332,7 @@ void ControlWindow::onCapture()
 	}
 
 	const int numFiles = QDir(directory.c_str()).count() - 2;
-	statusBar->showMessage(QString(STATUS_MSG "%1 images in %2").arg(QString::number(numFiles), labelDropdown->currentText()));
+	statusBar->showMessage(QString(STATUS_MSG "%1 images in %2").arg(QString::number(numFiles), QString::fromStdString(subdirPath)));
 }
 
 

@@ -71,6 +71,7 @@ protected:
 	std::string labelPath;
 	QLabel*     labelWidget;
 	QComboBox*  labelDropdown;
+	QComboBox*  setDropdown;
 
 	std::string datasetPath;
 	QLabel*     datasetWidget;	
