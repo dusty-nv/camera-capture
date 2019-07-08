@@ -64,4 +64,6 @@ cuda_add_executable(camera-capture ${cameraCaptureSources})
 
 target_link_libraries(camera-capture jetson-inference jetson-utils Qt5::Widgets)	
 
+install(TARGETS camera-capture DESTINATION bin)
+
 
