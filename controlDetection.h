@@ -20,8 +20,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __CAMERA_CONTROL_WINDOW__
-#define __CAMERA_CONTROL_WINDOW__
+#ifndef __CAMERA_CONTROL_DETECTION_WIDGET__
+#define __CAMERA_CONTROL_DETECTION_WIDGET__
 
 #include <QtWidgets>
 
@@ -30,41 +30,47 @@
 
 
 /*
- * Capture control window
+ * Detection control widget
  */
-class ControlWindow : public QWidget
+class ControlDetectionWidget : public QWidget
 {
 	Q_OBJECT
 
 public:
 	// create window
-	static ControlWindow* Create( commandLine& cmdLine, CaptureWindow* captureWindow );
+	ControlDetectionWidget( commandLine* cmdLine, CaptureWindow* captureWindow );
 
 	// destructor
-	~ControlWindow();
-
-	// process UI events
-	void ProcessEvents();
-
-	// window open/closed status
-	bool IsOpen() const;
-	bool IsClosed() const;
-
-	// sizeHint
-	virtual QSize sizeHint() const;
+	~ControlDetectionWidget();
 
 public slots:
-	void onDatasetType( const QString& text );
+	void onCapture();
+	void onQualityChanged( int value );
+
+	void selectDatasetPath();
+	void selectLabelFile();
 
 protected:
-	ControlWindow( commandLine& cmdLine, CaptureWindow* captureWindow );
+	void createDatasetDirectories();
 
-	static const int numDatasetTypes = 2;
+	void hideEvent( QHideEvent* event );
+	void showEvent( QShowEvent* event );
 
-	const char*    datasetTypes[numDatasetTypes];
-	QWidget*       datasetWidgets[numDatasetTypes];
 	CaptureWindow* captureWindow;
-	commandLine*   cmdLine;	
+	QStatusBar*    statusBar;
+
+	std::string labelPath;
+	QLabel*     labelWidget;
+	QComboBox*  labelDropdown;
+	QComboBox*  setDropdown;
+
+	std::string datasetPath;
+	QLabel*     datasetWidget;	
+
+	QLabel*     qualityLabel;
+	QSlider*    qualitySlider;
+
+	QPushButton* captureButton;
 };
 
 
