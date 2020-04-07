@@ -24,7 +24,7 @@ message("-- found Qt5Widgets include:  ${Qt5Widgets_INCLUDE_DIRS}")
 get_directory_property(hasParent PARENT_DIRECTORY)
 
 if(hasParent)
-	message("-- camera-capture:  building as submodule, ${hasParent}")
+	message("-- camera-capture:  building as submodule of ${hasParent}")
 else()
 	message("-- camera-capture:  building as standalone")
 	
