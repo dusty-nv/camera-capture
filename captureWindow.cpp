@@ -24,8 +24,9 @@
 
 #include "gstCamera.h"
 #include "glDisplay.h"
-
 #include "imageIO.h"
+
+#include <X11/cursorfont.h>
 
 
 // constructor
@@ -85,13 +86,18 @@ bool CaptureWindow::init( commandLine& cmdLine )
 	/*
 	 * create openGL window
 	 */
-	display = glDisplay::Create();
+	display = glDisplay::Create("Data Collection Tool",
+						   camera->GetWidth() + cameraOffsetX + 5,
+						   camera->GetHeight() + cameraOffsetY + 5);
 
 	if( !display ) 
 	{
 		printf("camera-capture:  failed to create openGL display\n");
 		return false;
 	}
+
+	//display->SetCursor(XC_tcross);
+	//display->ResetCursor();
 
 	return true;
 }
@@ -108,7 +114,7 @@ void CaptureWindow::Render()
 	if( display != NULL )
 	{
 		// render the image
-		display->RenderOnce(imgRGBA, camera->GetWidth(), camera->GetHeight());
+		display->RenderOnce(imgRGBA, camera->GetWidth(), camera->GetHeight(), cameraOffsetX, cameraOffsetY);
 
 		// update the status bar
 		char str[256];
@@ -171,5 +177,18 @@ int CaptureWindow::GetCameraHeight() const
 	return camera->GetHeight();
 }
 
+
+// GetWindowWidth
+int CaptureWindow::GetWindowWidth() const
+{
+	return display->GetWidth();
+}
+
+
+// GetWindowHeight
+int CaptureWindow::GetWindowHeight() const
+{
+	return display->GetHeight();
+}
 
 

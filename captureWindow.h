@@ -59,9 +59,16 @@ public:
 	int GetCameraWidth() const;
 	int GetCameraHeight() const;
 
+	// window dimensions
+	int GetWindowWidth() const;
+	int GetWindowHeight() const;
+
 protected:
 	CaptureWindow();
 	bool init( commandLine& cmdLine );
+
+	static const int cameraOffsetX = 5;
+	static const int cameraOffsetY = 5;
 
 	gstCamera* camera;
 	glDisplay* display;

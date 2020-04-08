@@ -87,7 +87,7 @@ ControlWindow::ControlWindow( commandLine& commandLine, CaptureWindow* capture )
 	
 
 	// move the window away from the camera feed
-	move(capture->GetCameraWidth() + 75, pos().y());
+	move(capture->GetWindowWidth() + 75, pos().y());
 }
 
 
