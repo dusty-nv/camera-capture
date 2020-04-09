@@ -96,6 +96,11 @@ bool CaptureWindow::init( commandLine& cmdLine )
 		return false;
 	}
 
+	/*glWidget* widget = display->AddWidget(new glWidget(50, 50, 200, 500));
+	
+	widget->SetMoveable(true);
+	widget->SetResizeable(true);*/
+
 	//display->SetCursor(XC_tcross);
 	//display->ResetCursor();
 
