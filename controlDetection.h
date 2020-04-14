@@ -44,7 +44,9 @@ public:
 	~ControlDetectionWidget();
 
 public slots:
-	void onCapture();
+	void onSave();
+	void onFreeze( bool toggled );
+
 	void onQualityChanged( int value );
 
 	void selectDatasetPath();
@@ -70,7 +72,8 @@ protected:
 	QLabel*     qualityLabel;
 	QSlider*    qualitySlider;
 
-	QPushButton* captureButton;
+	QPushButton* freezeButton;
+	QPushButton* saveButton;
 };
 
 

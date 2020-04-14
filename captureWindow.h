@@ -36,6 +36,13 @@ class glDisplay;
 class CaptureWindow
 {
 public:
+	// CaptureMode enum
+	enum CaptureMode
+	{
+		Live,
+		Edit
+	};
+
 	// create the window and camera object
 	static CaptureWindow* Create( commandLine& cmdLine );
 
@@ -47,6 +54,9 @@ public:
 
 	// save the latest frame to disk
 	bool Save( const char* filename, int quality=95 );
+
+	// set the current capture mode
+	void SetMode( CaptureMode mode );
 
 	// window open/closed status
 	bool IsOpen() const;
@@ -69,6 +79,8 @@ protected:
 
 	static const int cameraOffsetX = 5;
 	static const int cameraOffsetY = 5;
+
+	CaptureMode mode;
 
 	gstCamera* camera;
 	glDisplay* display;

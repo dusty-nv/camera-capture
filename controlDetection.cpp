@@ -131,15 +131,29 @@ ControlDetectionWidget::ControlDetectionWidget( commandLine* cmdLine, CaptureWin
 	layout->addLayout(qualityLayout);
 
 
-	// capture button
-	captureButton = new QPushButton("Capture (space)");
+	// freeze button
+	freezeButton = new QPushButton("Freeze (space)");
 
-	captureButton->setEnabled(false);
-	captureButton->setShortcut(QKeySequence(Qt::Key_Space));
+	//freezeButton->setEnabled(false);
+	freezeButton->setCheckable(true);
+	freezeButton->setShortcut(QKeySequence(Qt::Key_Space));
 
-	connect(captureButton, SIGNAL(clicked()), this, SLOT(onCapture()));
+	connect(freezeButton, SIGNAL(toggled(bool)), this, SLOT(onFreeze(bool)));
 
-	layout->addWidget(captureButton);
+	QHBoxLayout* buttonLayout = new QHBoxLayout();
+	buttonLayout->addWidget(freezeButton);
+
+
+	// save button
+	saveButton = new QPushButton("Save (S)");
+
+	//saveButton->setEnabled(false);
+	saveButton->setShortcut(QKeySequence(Qt::Key_S));
+
+	connect(saveButton, SIGNAL(clicked()), this, SLOT(onSave()));
+
+	buttonLayout->addWidget(saveButton);
+	layout->addLayout(buttonLayout);
 
 
 	// status bar
@@ -257,8 +271,8 @@ void ControlDetectionWidget::selectDatasetPath()
 	createDatasetDirectories();
 
 	// enable capture button
-	if( datasetPath.size() > 0 && labelPath.size() > 0 )
-		captureButton->setEnabled(true);
+	//if( datasetPath.size() > 0 && labelPath.size() > 0 )
+	//	freezeButton->setEnabled(true);
 
 	// update label with new path
 	QFontMetrics metrics(datasetWidget->font());
@@ -304,8 +318,8 @@ void ControlDetectionWidget::selectLabelFile()
 	createDatasetDirectories();
 
 	// enable capture button
-	if( datasetPath.size() > 0 && labelPath.size() > 0 )
-		captureButton->setEnabled(true);
+	//if( datasetPath.size() > 0 && labelPath.size() > 0 )
+	//	freezeButton->setEnabled(true);
 
 	// update label with new filename
 	QFontMetrics metrics(labelWidget->font());
@@ -315,8 +329,8 @@ void ControlDetectionWidget::selectLabelFile()
 }
 
 
-// onCapture
-void ControlDetectionWidget::onCapture()
+// onSave
+void ControlDetectionWidget::onSave()
 {
 	const std::string subsetLabel = setDropdown->currentText().toUtf8().constData();
 	const std::string classLabel  = labelDropdown->currentText().toUtf8().constData();
@@ -333,6 +347,15 @@ void ControlDetectionWidget::onCapture()
 
 	const int numFiles = QDir(directory.c_str()).count() - 2;
 	statusBar->showMessage(QString(STATUS_MSG "%1 images in %2").arg(QString::number(numFiles), QString::fromStdString(subdirPath)));
+}
+
+
+// onFreeze
+void ControlDetectionWidget::onFreeze( bool toggled )
+{
+	printf("on freeze (%i)\n", (int)toggled);
+
+	captureWindow->SetMode( toggled ? CaptureWindow::Edit : CaptureWindow::Live );
 }
 
 

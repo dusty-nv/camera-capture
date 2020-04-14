@@ -32,6 +32,7 @@
 // constructor
 CaptureWindow::CaptureWindow()
 {
+	mode    = Live;
 	camera  = NULL;
 	display = NULL;
 	imgRGBA = NULL;
@@ -106,20 +107,24 @@ bool CaptureWindow::init( commandLine& cmdLine )
 
 	return true;
 }
-	
+
 
 // Render
 void CaptureWindow::Render()
 {
 	// capture RGBA image
-	if( !camera->CaptureRGBA(&imgRGBA, 1000, true) )
-		printf("camera-capture:  failed to capture RGBA image from camera\n");
+	if( mode == Live )
+	{
+		if( !camera->CaptureRGBA(&imgRGBA, 1000, true) )
+			printf("camera-capture:  failed to capture RGBA image from camera\n");
+	}
 
 	// update display
 	if( display != NULL )
 	{
 		// render the image
-		display->RenderOnce(imgRGBA, camera->GetWidth(), camera->GetHeight(), cameraOffsetX, cameraOffsetY);
+		if( imgRGBA != NULL )
+			display->RenderOnce(imgRGBA, camera->GetWidth(), camera->GetHeight(), cameraOffsetX, cameraOffsetY);
 
 		// update the status bar
 		char str[256];
@@ -145,6 +150,24 @@ bool CaptureWindow::Save( const char* filename, int quality )
 
 	printf("camera-capture:  saved %s\n", filename);
 	return true;
+}
+
+
+// SetMode
+void CaptureWindow::SetMode( CaptureMode _mode )
+{
+	mode = _mode;
+
+	if( mode == Edit )
+	{
+		display->SetDefaultCursor(XC_tcross);
+		display->SetDragMode(glDisplay::DragCreate);
+	}
+	else if( mode == Live )
+	{
+		display->ResetDefaultCursor();
+		display->SetDragMode(glDisplay::DragDefault);
+	}
 }
 
 
