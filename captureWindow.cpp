@@ -220,3 +220,19 @@ int CaptureWindow::GetWindowHeight() const
 }
 
 
+// GetWidget
+glWidget* CaptureWindow::GetWidget( int index ) const
+{
+	display->GetWidget(index);
+}
+
+
+// RemoveWidget
+void CaptureWindow::RemoveWidget( int index ) const
+{
+	display->RemoveWidget(index);
+}
+
+
+
+

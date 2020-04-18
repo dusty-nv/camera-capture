@@ -47,8 +47,11 @@ public slots:
 	void onSave();
 	void onFreeze( bool toggled );
 
+	void onBoxRemove();
+	void onBoxClass( int value );
+	void onBoxCoord( double value );
 	void onQualityChanged( int value );
-
+	
 	void selectDatasetPath();
 	void selectLabelFile();
 
@@ -57,6 +60,13 @@ protected:
 
 	void hideEvent( QHideEvent* event );
 	void showEvent( QShowEvent* event );
+
+	void updateBoxColor( uint32_t index, uint32_t classID );
+	void updateBoxCoords( uint32_t index );
+	void updateBoxIndices();
+
+	static bool onCaptureEvent( uint16_t event, int a, int b, void* user );
+	static bool onWidgetEvent( glWidget* widget, uint16_t event, int a, int b, void* user );
 
 	CaptureWindow* captureWindow;
 	QStatusBar*    statusBar;
@@ -74,6 +84,8 @@ protected:
 
 	QPushButton* freezeButton;
 	QPushButton* saveButton;
+
+	QTableWidget* bboxTable;
 };
 
 

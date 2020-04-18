@@ -21,13 +21,19 @@
  */
 
 #include "controlDetection.h"
+
 #include "imageNet.h"
+
+#include "glEvents.h"
+#include "glWidget.h"
 
 
 #define STATUS_MSG "Status - "
 #define SELECT_LABEL_FILE_MSG STATUS_MSG "select output dataset path and label file"
-
 #define DEFAULT_JPEG_QUALITY 95
+
+#define BBOX_PROPERTY  "bboxIndex"
+#define COORD_PROPERTY "coordIndex"
 
 
 // constructor
@@ -55,8 +61,7 @@ ControlDetectionWidget::ControlDetectionWidget( commandLine* cmdLine, CaptureWin
 	datasetWidget->setFrameStyle(QFrame::Panel|QFrame::Sunken);
 	datasetWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
-	//datasetLayout->addWidget(new QLabel(tr("Dataset Path    ")));
-	datasetLayout->addWidget(new QLabel(tr("ABC123  Path    ")));	
+	datasetLayout->addWidget(new QLabel(tr("Dataset Path    ")));
 	datasetLayout->addWidget(datasetWidget);
 	datasetLayout->addWidget(datasetButton);
 
@@ -99,19 +104,6 @@ ControlDetectionWidget::ControlDetectionWidget( commandLine* cmdLine, CaptureWin
 	layout->addItem(subsetLayout);
 
 
-	// class label drop-down
-	QHBoxLayout* classLayout = new QHBoxLayout();
-
-	labelDropdown = new QComboBox();
-
-	labelDropdown->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-
-	classLayout->addWidget(new QLabel(tr("Current Class   ")));
-	classLayout->addWidget(labelDropdown);
-
-	layout->addItem(classLayout);
-
-
 	// jpeg quality
 	QHBoxLayout* qualityLayout = new QHBoxLayout();
 
@@ -130,9 +122,25 @@ ControlDetectionWidget::ControlDetectionWidget( commandLine* cmdLine, CaptureWin
 
 	layout->addLayout(qualityLayout);
 
+	
+	// object list
+	bboxTable = new QTableWidget();
+
+	const int numColumns = 6;
+	const int coordColumnWidth = 65;
+
+	bboxTable->setMinimumHeight(125);
+	bboxTable->setColumnCount(numColumns);
+	bboxTable->setHorizontalHeaderLabels( { "Class", "x", "y", "Width", "Height", "Delete" } );
+
+	for( int n=1; n < numColumns; n++ )
+		bboxTable->setColumnWidth(n, coordColumnWidth);
+
+	layout->addWidget(bboxTable);
+
 
 	// freeze button
-	freezeButton = new QPushButton("Freeze (space)");
+	freezeButton = new QPushButton("Freeze/Edit (space)");
 
 	//freezeButton->setEnabled(false);
 	freezeButton->setCheckable(true);
@@ -165,10 +173,11 @@ ControlDetectionWidget::ControlDetectionWidget( commandLine* cmdLine, CaptureWin
 	layout->addWidget(statusBar);
 
 	
-	/*
-	 * configure options
- 	 */
+	// finish configuration
 	setLayout(layout);
+
+	glRegisterEvents(ControlDetectionWidget::onCaptureEvent, this);
+
 }
 
 
@@ -191,6 +200,180 @@ void ControlDetectionWidget::hideEvent( QHideEvent* event )
 void ControlDetectionWidget::showEvent( QShowEvent* event )
 {
 	printf("camera-capture:  detection dataset control widget show()\n");
+}
+
+
+// onWidgetEvent
+bool ControlDetectionWidget::onWidgetEvent( glWidget* widget, uint16_t event, int a, int b, void* user )
+{
+	ControlDetectionWidget* control = (ControlDetectionWidget*)user;
+
+	if( event == WIDGET_MOVED || event == WIDGET_RESIZED )
+		control->updateBoxCoords(widget->GetIndex());
+
+	return true;
+}
+
+
+// onCaptureEvent
+bool ControlDetectionWidget::onCaptureEvent( uint16_t event, int a, int b, void* user )
+{
+	ControlDetectionWidget* control = (ControlDetectionWidget*)user;
+
+	if( !control )
+		return false;
+
+	if( event == WIDGET_CREATED )
+	{
+		// object class drop-down
+		QComboBox* itemClass = new QComboBox();
+		itemClass->addItems( {"class A", "class B", "class C"} );
+		connect(itemClass, SIGNAL(currentIndexChanged(int)), control, SLOT(onBoxClass(int)));
+
+		control->bboxTable->setRowCount(a+1);
+		control->bboxTable->setCellWidget(a, 0, itemClass);
+
+		// coordinate spinners
+		QDoubleSpinBox* spinBox[4];
+
+		for( int n=0; n < 4; n++ )
+		{
+			spinBox[n] = new QDoubleSpinBox();		
+
+			spinBox[n]->setDecimals(1);	
+			spinBox[n]->setRange(n < 2 ? -9999.0 : 0.0, 9999.0);
+			spinBox[n]->setProperty(COORD_PROPERTY, n);
+
+			connect(spinBox[n], SIGNAL(valueChanged(double)), control, SLOT(onBoxCoord(double)));
+			control->bboxTable->setCellWidget(a, n+1, spinBox[n]);
+		}
+
+		// remove button
+		QPushButton* removeButton = new QPushButton("X");
+		connect(removeButton, SIGNAL(pressed()), control, SLOT(onBoxRemove()));
+		control->bboxTable->setCellWidget(a, 5, removeButton);
+
+		// update properties
+		control->updateBoxIndices();
+		control->updateBoxCoords(a);
+		control->updateBoxColor(a,0);
+
+		// subscribe to widget events
+		control->captureWindow->GetWidget(a)->AddEventHandler(ControlDetectionWidget::onWidgetEvent, control);
+	}
+		
+	return true;
+}
+
+
+// onBoxRemove
+void ControlDetectionWidget::onBoxRemove()
+{
+	QPushButton* senderWidget = qobject_cast<QPushButton*>(sender());
+
+	if( !senderWidget )
+		return;
+
+	const int bboxIndex = senderWidget->property(BBOX_PROPERTY).toInt();
+
+	//printf("camera-capture:  on box removed => box %i\n", bboxIndex);
+
+	captureWindow->RemoveWidget(bboxIndex);
+	bboxTable->removeRow(bboxIndex);
+	updateBoxIndices();
+}
+
+
+// onBoxClass
+void ControlDetectionWidget::onBoxClass( int index )
+{
+	QComboBox* senderWidget = qobject_cast<QComboBox*>(sender());
+
+	if( !senderWidget )
+		return;
+
+	const int bboxIndex = senderWidget->property(BBOX_PROPERTY).toInt();
+	//printf("camera-capture:  on class changed => box %i, class %i\n", bboxIndex, index);
+	updateBoxColor(bboxIndex, index);
+}
+
+
+// onBoxCoord
+void ControlDetectionWidget::onBoxCoord( double value )
+{
+	QDoubleSpinBox* senderWidget = qobject_cast<QDoubleSpinBox*>(sender());
+
+	if( !senderWidget )
+		return;
+
+	const int bboxIndex = senderWidget->property(BBOX_PROPERTY).toInt();
+	const int coordIndex = senderWidget->property(COORD_PROPERTY).toInt();
+
+	//printf("camera-capture:  on coord changed => box %i, coord %i, %f\n", bboxIndex, coordIndex, (float)value);
+
+	glWidget* widget = captureWindow->GetWidget(bboxIndex);
+
+	if( coordIndex == 0 )
+		widget->SetX(value);
+	else if( coordIndex == 1 )
+		widget->SetY(value);
+	else if( coordIndex == 2 )
+		widget->SetWidth(value);
+	else if( coordIndex == 3 )
+		widget->SetHeight(value);
+}
+
+
+// updateBoxColor
+void ControlDetectionWidget::updateBoxColor( uint32_t index, uint32_t classID )
+{
+	glWidget* widget = captureWindow->GetWidget(index);
+
+	widget->SetLineColor(classID == 0 ? 1.0 : 0.0, classID == 1 ? 1.0 : 0.0, classID == 2 ? 1.0 : 0.0 );
+}
+
+
+// updateBoxCoords
+void ControlDetectionWidget::updateBoxCoords( uint32_t index )
+{
+	glWidget* box = captureWindow->GetWidget(index);
+
+	if( !box )
+		return;
+
+	QDoubleSpinBox* x = qobject_cast<QDoubleSpinBox*>(bboxTable->cellWidget(index,1));
+	QDoubleSpinBox* y = qobject_cast<QDoubleSpinBox*>(bboxTable->cellWidget(index,2));
+	QDoubleSpinBox* w = qobject_cast<QDoubleSpinBox*>(bboxTable->cellWidget(index,3));
+	QDoubleSpinBox* h = qobject_cast<QDoubleSpinBox*>(bboxTable->cellWidget(index,4));
+
+	if( !x || !y || !w || !h )
+		return;
+
+	x->setValue( box->X() );
+	y->setValue( box->Y() );
+	w->setValue( box->Width() );
+	h->setValue( box->Height() );
+}
+
+
+// updateBoxIndices
+void ControlDetectionWidget::updateBoxIndices()
+{
+	const int numRows = bboxTable->rowCount();
+	const int numColumns = bboxTable->columnCount();
+
+	for( int y=0; y < numRows; y++ )
+	{
+		for( int x=0; x < numColumns; x++ )
+		{
+			QWidget* widget = bboxTable->cellWidget(y,x);
+
+			if( !widget )
+				continue;
+
+			widget->setProperty(BBOX_PROPERTY, y);
+		}
+	}
 }
 
 

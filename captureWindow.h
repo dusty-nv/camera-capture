@@ -28,6 +28,7 @@
 // forward declarations
 class gstCamera;
 class glDisplay;
+class glWidget;
 
 
 /*
@@ -72,6 +73,10 @@ public:
 	// window dimensions
 	int GetWindowWidth() const;
 	int GetWindowHeight() const;
+
+	// widget operations
+	glWidget* GetWidget( int index ) const;
+	void RemoveWidget( int index ) const;
 
 protected:
 	CaptureWindow();

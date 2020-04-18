@@ -112,7 +112,7 @@ void ControlWindow::onDatasetType(const QString& text)
 // sizeHint
 QSize ControlWindow::sizeHint() const
 {
-	return QSize(400,15);
+	return QSize(475,15);
 }
 
 
