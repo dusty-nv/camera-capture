@@ -22,10 +22,14 @@
 
 #include "controlDetection.h"
 
-#include "imageNet.h"
+#include "detectNet.h"
 
 #include "glEvents.h"
 #include "glWidget.h"
+
+#include "XML.h"
+
+using namespace tinyxml2;
 
 
 #define STATUS_MSG "Status - "
@@ -139,6 +143,22 @@ ControlDetectionWidget::ControlDetectionWidget( commandLine* cmdLine, CaptureWin
 	layout->addWidget(bboxTable);
 
 
+	// option checkboxes
+	saveOnUnfreeze = new QCheckBox("Save on Unfreeze");
+	clearOnUnfreeze = new QCheckBox("Clear on Unfreeze");
+	mergeDataSubsets = new QCheckBox("Merge Sets");
+
+	saveOnUnfreeze->setCheckState(Qt::Checked);
+	clearOnUnfreeze->setCheckState(Qt::Checked);
+
+	QHBoxLayout* optionsLayout = new QHBoxLayout();
+
+	optionsLayout->addWidget(saveOnUnfreeze);
+	optionsLayout->addWidget(clearOnUnfreeze);
+	optionsLayout->addWidget(mergeDataSubsets);
+
+	layout->addLayout(optionsLayout);
+
 	// freeze button
 	freezeButton = new QPushButton("Freeze/Edit (space)");
 
@@ -227,7 +247,10 @@ bool ControlDetectionWidget::onCaptureEvent( uint16_t event, int a, int b, void*
 	{
 		// object class drop-down
 		QComboBox* itemClass = new QComboBox();
-		itemClass->addItems( {"class A", "class B", "class C"} );
+
+		for( size_t n=0; n < control->classLabels.size(); n++ )
+			itemClass->addItem(QString::fromStdString(control->classLabels[n]));	
+
 		connect(itemClass, SIGNAL(currentIndexChanged(int)), control, SLOT(onBoxClass(int)));
 
 		control->bboxTable->setRowCount(a+1);
@@ -262,6 +285,19 @@ bool ControlDetectionWidget::onCaptureEvent( uint16_t event, int a, int b, void*
 		control->captureWindow->GetWidget(a)->AddEventHandler(ControlDetectionWidget::onWidgetEvent, control);
 	}
 		
+	return true;
+}
+
+
+// clearBoxes
+bool ControlDetectionWidget::clearBoxes()
+{
+	if( !bboxTable || !captureWindow )
+		return false;
+
+	bboxTable->setRowCount(0);
+	captureWindow->RemoveAllWidgets();
+
 	return true;
 }
 
@@ -329,7 +365,10 @@ void ControlDetectionWidget::updateBoxColor( uint32_t index, uint32_t classID )
 {
 	glWidget* widget = captureWindow->GetWidget(index);
 
-	widget->SetLineColor(classID == 0 ? 1.0 : 0.0, classID == 1 ? 1.0 : 0.0, classID == 2 ? 1.0 : 0.0 );
+	uint8_t rgb[] = {0,0,0};
+	detectNet::GenerateColor(classID, rgb);
+
+	widget->SetLineColor(float(rgb[0])/255.0f, float(rgb[1])/255.0f, float(rgb[2])/255.0f);
 }
 
 
@@ -377,67 +416,44 @@ void ControlDetectionWidget::updateBoxIndices()
 }
 
 
+// makeDir
+bool ControlDetectionWidget::makeDir( QDir& root, const QString& subdir )
+{
+	if( !root.exists(subdir) )
+	{
+		if( !root.mkpath(subdir) ) //mkdir(subdir) )
+		{
+			const QString msg = QString("Failed to create dataset subdirectory '%1/'").arg(subdir);
+			QMessageBox::critical(this, tr("Error Creating Dataset Directories"), msg);
+			statusBar->showMessage(QString(STATUS_MSG) + msg);
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+
 // createDatasetDirectories
-void ControlDetectionWidget::createDatasetDirectories()
+bool ControlDetectionWidget::createDatasetDirectories()
 {
 	// check that we have a valid path to the dataset
 	if( datasetPath.size() == 0 )
-		return;
+		return false;
 
-	// check that we have loaded class labels
-	const int numClasses = labelDropdown->count();
+	// create root structure
+	QDir root(QString::fromStdString(datasetPath));
 
-	if( numClasses == 0 )
-		return;
-
-	// check that each subdirectory exists
-	QDir dir(QString::fromStdString(datasetPath));
-
-	// create directories for each training set and class
-	const int numSets = setDropdown->count();
-
-	for( int s=0; s < numSets; s++ )
+	if( !makeDir(root, "Annotations") ||
+	    !makeDir(root, "ImageSets/Main") ||
+	    !makeDir(root, "JPEGImages") )
 	{
-		const QString setName = setDropdown->itemText(s);
+		return false;
+	}
 
-		if( !dir.exists(setName) )
-		{
-			if( !dir.mkdir(setName) )
-			{
-				const QString msg = QString("Failed to create dataset subdirectory '%1/'").arg(setName);
-				QMessageBox::critical(this, tr("Error Creating Dataset Directories"), msg);
-				statusBar->showMessage(QString(STATUS_MSG) + msg);
-				continue;
-			}
-		}
-	
-		QDir setDir = dir;
-		
-		if( !setDir.cd(setName) )
-		{
-			const QString msg = QString("Failed to cd to dataset subdirectory '%1/'").arg(setName);
-			QMessageBox::critical(this, tr("Error Creating Dataset Directories"), msg);
-			statusBar->showMessage(QString(STATUS_MSG) + msg);
-			continue;
-		}
-
-		for( int n=0; n < numClasses; n++ )
-		{
-			const QString subdir = labelDropdown->itemText(n);
-
-			if( !setDir.exists(subdir) )
-			{
-				if( !setDir.mkdir(subdir) )
-				{
-					const QString msg = QString("Failed to create dataset subdirectory '%1/%2/'").arg(setName, subdir);
-					QMessageBox::critical(this, tr("Error Creating Dataset Directories"), msg);
-					statusBar->showMessage(QString(STATUS_MSG) + msg);
-					continue;
-				}
-			}
-		}
-	}		
+	return true;
 }
+
 
 // selectDatasetPath
 void ControlDetectionWidget::selectDatasetPath()
@@ -477,28 +493,15 @@ void ControlDetectionWidget::selectLabelFile()
 	labelPath = qFilename.toUtf8().constData();
 
 	// load the class descriptions	
-	std::vector<std::string> classDesc;
-
-	if( !imageNet::LoadClassInfo(labelPath.c_str(), classDesc) )
+	if( !detectNet::LoadClassInfo(labelPath.c_str(), classLabels) )
 	{
 		QMessageBox::critical(this, tr("Failed to Load Class Labels"), tr("There was an error loading the label files from:  ") + qFilename);
 		statusBar->showMessage(tr(SELECT_LABEL_FILE_MSG));		
 		return;
 	}
 
-	// update drop-down with new labels
-	const size_t numClasses = classDesc.size();
-
-	labelDropdown->clear();
-
-	for( size_t n=0; n < numClasses; n++ )
-		labelDropdown->addItem(QString::fromStdString(classDesc[n]));		
-
-	statusBar->showMessage(QString(STATUS_MSG "loaded %1 class labels").arg(numClasses));
-
-
-	// make sure the directories exist
-	createDatasetDirectories();
+	// TODO update existing label drop-downs in grid	
+	statusBar->showMessage(QString(STATUS_MSG "loaded %1 class labels").arg(classLabels.size()));
 
 	// enable capture button
 	//if( datasetPath.size() > 0 && labelPath.size() > 0 )
@@ -512,31 +515,172 @@ void ControlDetectionWidget::selectLabelFile()
 }
 
 
+// xmlAddElement
+inline XMLElement* xmlAddElement( XMLDocument& doc, XMLNode* parent, const char* elementName )
+{
+	XMLElement* element = doc.NewElement(elementName);
+	parent->InsertEndChild(element);
+	return element;
+}
+
+
+// xmlAddElement
+template<typename T> XMLElement* xmlAddElement( XMLDocument& doc, XMLNode* parent, const char* elementName, T elementValue )
+{
+	XMLElement* element = xmlAddElement(doc, parent, elementName);
+	element->SetText(elementValue);
+	return element;
+}
+
+
+// saveFrame
+bool ControlDetectionWidget::saveFrame()
+{
+	printf("camera-capture:  saving frame...\n");
+
+	const std::string datasetName = QDir(QString::fromStdString(datasetPath)).dirName().toStdString();
+	const std::string timestamp   = QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss").toUtf8().constData();
+	const std::string imgFilename = timestamp + ".jpg";
+	const std::string imgPath     = datasetPath + "/JPEGImages/" + imgFilename;
+	const std::string xmlPath     = datasetPath + "/Annotations/" + timestamp + ".xml";
+	
+	// save the image
+	if( !captureWindow->Save(imgPath.c_str()) )
+	{
+		statusBar->showMessage(QString(STATUS_MSG "failed to save ") + QString::fromStdString(imgFilename));
+		return false;
+	}
+
+	// create annotation XML
+	XMLDocument doc;
+
+	XMLNode* root = doc.NewElement("annotation");
+	doc.InsertFirstChild(root);
+
+	xmlAddElement(doc, root, "filename", imgFilename.c_str());
+	xmlAddElement(doc, root, "folder", datasetName.c_str());
+	
+	XMLElement* source = xmlAddElement(doc, root, "source");
+	
+	xmlAddElement(doc, source, "database", datasetName.c_str());
+	xmlAddElement(doc, source, "annotation", "custom");
+	xmlAddElement(doc, source, "image", "custom");
+
+	XMLElement* size = xmlAddElement(doc, root, "size");
+
+	xmlAddElement(doc, size, "width", captureWindow->GetCameraWidth());
+	xmlAddElement(doc, size, "height", captureWindow->GetCameraHeight());
+	xmlAddElement(doc, size, "depth", 3);
+	xmlAddElement(doc, root, "segmented", 0);
+
+	// add bounding boxes to XML
+	const int numBoxes = bboxTable->rowCount();
+
+	for( int n=0; n < numBoxes; n++ )
+	{
+		XMLElement* object = xmlAddElement(doc, root, "object");
+
+		xmlAddElement(doc, object, "name", qPrintable(qobject_cast<QComboBox*>(bboxTable->cellWidget(n,0))->currentText()));
+		xmlAddElement(doc, object, "pose", "unspecified");
+		xmlAddElement(doc, object, "truncated", "0");
+		xmlAddElement(doc, object, "difficult", "0");
+
+		const int bboxIndex = bboxTable->cellWidget(n,0)->property(BBOX_PROPERTY).toInt();
+		glWidget* boxWidget = captureWindow->GetWidget(bboxIndex);
+
+		float x1, y1, x2, y2;
+		boxWidget->GetCoords(&x1, &y1, &x2, &y2);
+
+		XMLElement* bbox = xmlAddElement(doc, object, "bndbox");
+		
+		xmlAddElement(doc, bbox, "xmin", (int)x1);
+		xmlAddElement(doc, bbox, "ymin", (int)y1);
+		xmlAddElement(doc, bbox, "xmax", (int)x2);
+		xmlAddElement(doc, bbox, "ymax", (int)y2);
+	}
+
+	// save XML
+	if( doc.SaveFile(xmlPath.c_str()) != XML_SUCCESS )
+	{
+		printf("camera-capture:  failed to save %s\n", xmlPath.c_str());
+		statusBar->showMessage(QString(STATUS_MSG "failed to save ") + QString::fromStdString(xmlPath));
+		return false;
+	}
+
+	// append to image list(s)
+	const std::string currentSet = setDropdown->currentText().toLower().toStdString();
+
+	if( mergeDataSubsets->checkState() == Qt::Checked )
+	{
+		addToImageSet("train", timestamp);
+		addToImageSet("trainval", timestamp);
+		addToImageSet("test", timestamp);
+		addToImageSet("val", timestamp);
+	}
+	else
+	{
+		addToImageSet(currentSet, timestamp);
+	
+		if( currentSet == "train" || currentSet == "val" )
+			addToImageSet("trainval", timestamp);
+	}
+
+	//const int numFiles = QDir(directory.c_str()).count() - 2;
+	//statusBar->showMessage(QString(STATUS_MSG "%1 images in %2").arg(QString::number(numFiles), QString::fromStdString(subdirPath)));
+
+	return true;
+}
+
+
 // onSave
 void ControlDetectionWidget::onSave()
 {
-	const std::string subsetLabel = setDropdown->currentText().toUtf8().constData();
-	const std::string classLabel  = labelDropdown->currentText().toUtf8().constData();
-	const std::string timestamp   = QDateTime::currentDateTime().toString("ddMMyyyy-hhmmss").toUtf8().constData();
-	const std::string subdirPath  = subsetLabel + "/" + classLabel;
-	const std::string directory   = datasetPath + "/" + subdirPath;
-	const std::string filename    = directory + "/" + timestamp + ".jpg";
+	saveFrame();
+}
 
-	if( !captureWindow->Save(filename.c_str()) )
+
+// addToImageSet
+bool ControlDetectionWidget::addToImageSet( const std::string& imgSet, const std::string& imgName )
+{
+	const std::string filename = datasetPath + "/ImageSets/Main/" + imgSet + ".txt";
+	const std::string imgNameNL = imgName + "\n";
+
+	FILE* file = fopen(filename.c_str(), "a");
+
+	if( !file )
 	{
-		statusBar->showMessage(QString(STATUS_MSG "failed to save ") + QString::fromStdString(timestamp) + QString(".jpg"));
-		return;
+		printf("camera-capture:  failed to open %s\n", filename.c_str());
+		statusBar->showMessage(QString(STATUS_MSG "failed to open ") + QString::fromStdString(filename));
+		return false;
 	}
 
-	const int numFiles = QDir(directory.c_str()).count() - 2;
-	statusBar->showMessage(QString(STATUS_MSG "%1 images in %2").arg(QString::number(numFiles), QString::fromStdString(subdirPath)));
+	const int result = fputs(imgNameNL.c_str(), file);
+
+	if( result < 0 )
+	{
+		printf("camera-capture:  failed to save %s\n", filename.c_str());
+		statusBar->showMessage(QString(STATUS_MSG "failed to save ") + QString::fromStdString(filename));
+		return false;
+	}
+	
+	fclose(file);
+	return true;
 }
 
 
 // onFreeze
 void ControlDetectionWidget::onFreeze( bool toggled )
 {
-	printf("on freeze (%i)\n", (int)toggled);
+	printf("camera-capture:  on freeze (%i)\n", (int)toggled);
+
+	if( !toggled )
+	{
+		if( saveOnUnfreeze->checkState() == Qt::Checked )
+			saveFrame();
+
+		if( clearOnUnfreeze->checkState() == Qt::Checked )
+			clearBoxes();
+	}
 
 	captureWindow->SetMode( toggled ? CaptureWindow::Edit : CaptureWindow::Live );
 }

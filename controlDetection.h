@@ -55,8 +55,12 @@ public slots:
 	void selectDatasetPath();
 	void selectLabelFile();
 
-protected:
-	void createDatasetDirectories();
+protected:	
+	bool saveFrame();
+	bool clearBoxes();
+	bool createDatasetDirectories();
+	bool makeDir( QDir& root, const QString& subdir );
+	bool addToImageSet( const std::string& imgSet, const std::string& imgName );
 
 	void hideEvent( QHideEvent* event );
 	void showEvent( QShowEvent* event );
@@ -71,9 +75,10 @@ protected:
 	CaptureWindow* captureWindow;
 	QStatusBar*    statusBar;
 
+	std::vector<std::string> classLabels;
+
 	std::string labelPath;
 	QLabel*     labelWidget;
-	QComboBox*  labelDropdown;
 	QComboBox*  setDropdown;
 
 	std::string datasetPath;
@@ -81,6 +86,10 @@ protected:
 
 	QLabel*     qualityLabel;
 	QSlider*    qualitySlider;
+
+	QCheckBox*  saveOnUnfreeze;
+	QCheckBox*  clearOnUnfreeze;
+	QCheckBox*  mergeDataSubsets;
 
 	QPushButton* freezeButton;
 	QPushButton* saveButton;
