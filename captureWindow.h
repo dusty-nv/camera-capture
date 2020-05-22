@@ -76,7 +76,9 @@ public:
 
 	// widget operations
 	glWidget* GetWidget( int index ) const;
+
 	void RemoveWidget( int index ) const;
+	void RemoveAllWidgets() const;
 
 protected:
 	CaptureWindow();

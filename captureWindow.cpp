@@ -234,5 +234,14 @@ void CaptureWindow::RemoveWidget( int index ) const
 }
 
 
+// RemoveAllWidgets
+void CaptureWindow::RemoveAllWidgets() const
+{
+	display->RemoveAllWidgets();
+}
+
+
+
+
 
 
