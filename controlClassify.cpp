@@ -305,7 +305,7 @@ void ControlClassifyWidget::onCapture()
 {
 	const std::string subsetLabel = setDropdown->currentText().toUtf8().constData();
 	const std::string classLabel  = labelDropdown->currentText().toUtf8().constData();
-	const std::string timestamp   = QDateTime::currentDateTime().toString("ddMMyyyy-hhmmss").toUtf8().constData();
+	const std::string timestamp   = QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss").toUtf8().constData();
 	const std::string subdirPath  = subsetLabel + "/" + classLabel;
 	const std::string directory   = datasetPath + "/" + subdirPath;
 	const std::string filename    = directory + "/" + timestamp + ".jpg";
