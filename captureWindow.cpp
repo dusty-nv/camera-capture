@@ -78,10 +78,7 @@ bool CaptureWindow::init( commandLine& cmdLine )
 		return false;
 	}
 	
-	printf("\ncamera-capture:  successfully initialized camera device\n");
-	printf("    width:  %u\n", camera->GetWidth());
-	printf("   height:  %u\n", camera->GetHeight());
-	printf("    depth:  %u (bpp)\n\n", camera->GetPixelDepth());
+	printf("\ncamera-capture:  successfully initialized camera device (%ux%u)\n", camera->GetWidth(), camera->GetHeight());
 	
 
 	/*
