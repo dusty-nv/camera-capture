@@ -24,9 +24,10 @@
 #define __CAMERA_CAPTURE_WINDOW__
 
 #include "commandLine.h"
+#include "cudaUtility.h"
 
 // forward declarations
-class gstCamera;
+class videoSource;
 class glDisplay;
 class glWidget;
 
@@ -89,10 +90,10 @@ protected:
 
 	CaptureMode mode;
 
-	gstCamera* camera;
+	videoSource* camera;
 	glDisplay* display;
 
-	float* imgRGBA;
+	uchar3* imgRGB;
 };
 
 #endif

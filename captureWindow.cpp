@@ -22,7 +22,7 @@
 
 #include "captureWindow.h"
 
-#include "gstCamera.h"
+#include "videoSource.h"
 #include "glDisplay.h"
 #include "imageIO.h"
 
@@ -35,7 +35,7 @@ CaptureWindow::CaptureWindow()
 	mode    = Live;
 	camera  = NULL;
 	display = NULL;
-	imgRGBA = NULL;
+	imgRGB  = NULL;
 }
 
 
@@ -68,17 +68,15 @@ bool CaptureWindow::init( commandLine& cmdLine )
 	/*
 	 * create the camera device
 	 */
-	camera = gstCamera::Create(cmdLine.GetInt("width", gstCamera::DefaultWidth),
-						  cmdLine.GetInt("height", gstCamera::DefaultHeight),
-						  cmdLine.GetString("camera"));
+	camera = videoSource::Create(cmdLine, ARG_POSITION(0));
 
 	if( !camera )
 	{
-		printf("\ncamera-capture:  failed to initialize camera device\n");
+		printf("\ncamera-capture:  failed to initialize video device\n");
 		return false;
 	}
 	
-	printf("\ncamera-capture:  successfully initialized camera device (%ux%u)\n", camera->GetWidth(), camera->GetHeight());
+	printf("\ncamera-capture:  successfully initialized video device (%ux%u)\n", camera->GetWidth(), camera->GetHeight());
 	
 
 	/*
@@ -112,7 +110,7 @@ void CaptureWindow::Render()
 	// capture RGBA image
 	if( mode == Live )
 	{
-		if( !camera->CaptureRGBA(&imgRGBA, 1000, true) )
+		if( !camera->Capture(&imgRGB, 1000) )
 			printf("camera-capture:  failed to capture RGBA image from camera\n");
 	}
 
@@ -120,8 +118,8 @@ void CaptureWindow::Render()
 	if( display != NULL )
 	{
 		// render the image
-		if( imgRGBA != NULL )
-			display->RenderOnce(imgRGBA, camera->GetWidth(), camera->GetHeight(), cameraOffsetX, cameraOffsetY);
+		if( imgRGB != NULL )
+			display->RenderOnce(imgRGB, camera->GetWidth(), camera->GetHeight(), IMAGE_RGB8, cameraOffsetX, cameraOffsetY);
 
 		// update the status bar
 		char str[256];
@@ -134,12 +132,12 @@ void CaptureWindow::Render()
 // Save
 bool CaptureWindow::Save( const char* filename, int quality )
 {
-	if( !filename || !imgRGBA )
+	if( !filename || !imgRGB )
 		return false;
 
 	CUDA(cudaDeviceSynchronize());
 
-	if( !saveImageRGBA(filename, (float4*)imgRGBA, camera->GetWidth(), camera->GetHeight(), 255.0f, quality) )
+	if( !saveImage(filename, imgRGB, camera->GetWidth(), camera->GetHeight(), quality) )
 	{
 		printf("camera-capture:  failed to save %s\n", filename);
 		return false;
