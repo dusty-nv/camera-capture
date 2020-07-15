@@ -162,7 +162,7 @@ ControlDetectionWidget::ControlDetectionWidget( commandLine* cmdLine, CaptureWin
 	// freeze button
 	freezeButton = new QPushButton("Freeze/Edit (space)");
 
-	//freezeButton->setEnabled(false);
+	freezeButton->setEnabled(false);
 	freezeButton->setCheckable(true);
 	freezeButton->setShortcut(QKeySequence(Qt::Key_Space));
 
@@ -175,7 +175,7 @@ ControlDetectionWidget::ControlDetectionWidget( commandLine* cmdLine, CaptureWin
 	// save button
 	saveButton = new QPushButton("Save (S)");
 
-	//saveButton->setEnabled(false);
+	saveButton->setEnabled(false);
 	saveButton->setShortcut(QKeySequence(Qt::Key_S));
 
 	connect(saveButton, SIGNAL(clicked()), this, SLOT(onSave()));
@@ -282,7 +282,10 @@ bool ControlDetectionWidget::onCaptureEvent( uint16_t event, int a, int b, void*
 		control->updateBoxColor(a,0);
 
 		// subscribe to widget events
-		control->captureWindow->GetWidget(a)->AddEventHandler(ControlDetectionWidget::onWidgetEvent, control);
+		glWidget* widget = control->captureWindow->GetWidget(a);
+
+		widget->AddEventHandler(ControlDetectionWidget::onWidgetEvent, control);
+		widget->SetLineWidth(4.0f);
 	}
 		
 	return true;
@@ -478,6 +481,13 @@ void ControlDetectionWidget::selectDatasetPath()
 	int width = datasetWidget->width() - 2;
 	QString clippedText = metrics.elidedText(qPath, Qt::ElideLeft, width);
 	datasetWidget->setText(clippedText);
+
+	// enable widgets if ready
+	if( datasetPath.size() > 0 && labelPath.size() > 0 )
+	{
+		freezeButton->setEnabled(true);
+		saveButton->setEnabled(true);
+	}
 }
 
 
@@ -512,6 +522,13 @@ void ControlDetectionWidget::selectLabelFile()
 	int width = labelWidget->width() - 2;
 	QString clippedText = metrics.elidedText(qFilename, Qt::ElideLeft, width);
 	labelWidget->setText(clippedText);
+
+	// enable widgets if ready
+	if( datasetPath.size() > 0 && labelPath.size() > 0 )
+	{
+		freezeButton->setEnabled(true);
+		saveButton->setEnabled(true);
+	}
 }
 
 
