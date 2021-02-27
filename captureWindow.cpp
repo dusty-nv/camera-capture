@@ -218,7 +218,7 @@ int CaptureWindow::GetWindowHeight() const
 // GetWidget
 glWidget* CaptureWindow::GetWidget( int index ) const
 {
-	display->GetWidget(index);
+	return display->GetWidget(index);
 }
 
 
