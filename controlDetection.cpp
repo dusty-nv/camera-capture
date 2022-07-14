@@ -367,11 +367,8 @@ void ControlDetectionWidget::onBoxCoord( double value )
 void ControlDetectionWidget::updateBoxColor( uint32_t index, uint32_t classID )
 {
 	glWidget* widget = captureWindow->GetWidget(index);
-
-	uint8_t rgb[] = {0,0,0};
-	detectNet::GenerateColor(classID, rgb);
-
-	widget->SetLineColor(float(rgb[0])/255.0f, float(rgb[1])/255.0f, float(rgb[2])/255.0f);
+	const float4 color = detectNet::GenerateColor(classID);
+	widget->SetLineColor(color.x/255.0f, color.y/255.0f, color.z/255.0f);
 }
 
 
@@ -503,7 +500,7 @@ void ControlDetectionWidget::selectLabelFile()
 	labelPath = qFilename.toUtf8().constData();
 
 	// load the class descriptions	
-	if( !detectNet::LoadClassInfo(labelPath.c_str(), classLabels) )
+	if( !detectNet::LoadClassLabels(labelPath.c_str(), classLabels) )
 	{
 		QMessageBox::critical(this, tr("Failed to Load Class Labels"), tr("There was an error loading the label files from:  ") + qFilename);
 		statusBar->showMessage(tr(SELECT_LABEL_FILE_MSG));		

@@ -267,7 +267,7 @@ void ControlClassifyWidget::selectLabelFile()
 	// load the class descriptions	
 	std::vector<std::string> classDesc;
 
-	if( !imageNet::LoadClassInfo(labelPath.c_str(), classDesc) )
+	if( !imageNet::LoadClassLabels(labelPath.c_str(), classDesc) )
 	{
 		QMessageBox::critical(this, tr("Failed to Load Class Labels"), tr("There was an error loading the label files from:  ") + qFilename);
 		statusBar->showMessage(tr(SELECT_LABEL_FILE_MSG));		
