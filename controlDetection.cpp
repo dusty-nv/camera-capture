@@ -27,7 +27,7 @@
 #include "glEvents.h"
 #include "glWidget.h"
 
-#include "XML.h"
+#include "xml.h"
 
 using namespace tinyxml2;
 
